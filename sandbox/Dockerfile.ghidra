@@ -1,0 +1,37 @@
+FROM ubuntu:22.04
+
+LABEL org.mordor.component="ghidra-server"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    python3 \
+    python3-pip \
+    wget \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV GHIDRA_VERSION=12.0.4
+ENV GHIDRA_URL=https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${GHIDRA_VERSION}_build/ghidra_${GHIDRA_VERSION}_PUBLIC_20260303.zip
+
+RUN wget -q "$GHIDRA_URL" -O /tmp/ghidra.zip && \
+    unzip -q /tmp/ghidra.zip -d /opt/ && \
+    rm /tmp/ghidra.zip && \
+    ln -s /opt/ghidra_${GHIDRA_VERSION}_PUBLIC /opt/ghidra
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+COPY vendor/ghidra-mcp-release/GhidraMCP-release-1-4/GhidraMCP-1-4.zip /tmp/ghidra-mcp.zip
+RUN unzip -q /tmp/ghidra-mcp.zip -d /opt/ghidra/Extensions/Ghidra/ && \
+    rm /tmp/ghidra-mcp.zip
+
+RUN pip3 install requests mcp
+
+COPY vendor/ghidra-mcp-release/GhidraMCP-release-1-4/bridge_mcp_ghidra.py /usr/local/bin/bridge_mcp_ghidra.py
+
+EXPOSE 8080
+
+CMD ["python3", "/usr/local/bin/bridge_mcp_ghidra.py", "--transport", "sse", "--mcp-host", "0.0.0.0", "--mcp-port", "8080"]

@@ -1,0 +1,13 @@
+---
+sourceLocationPrefix: /Users/macbook/Developer/MORDOR
+baselineLinesOfCode: 4080
+unicodeNewlines: false
+columnKind: utf32
+primaryLanguage: python
+creationMetadata:
+  sha: c0b2261e7466f350de379c1f5d991c916676d448
+  cliVersion: 2.25.4
+  creationTime: 2026-05-09T15:01:48.118813Z
+overlayDatabase: false
+overlayBaseDatabase: false
+finalised: true

@@ -1,0 +1,5 @@
+# MORDOR — pip-installable dependencies
+# pyproject.toml is the source of truth; this file mirrors it for convenience.
+# Install with: pip install -e .  (uses pyproject.toml)
+
+-e .

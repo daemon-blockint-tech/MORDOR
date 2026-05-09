@@ -1,0 +1,69 @@
+{
+  "serverType": "stdio",
+  "command": "idat64",
+  "args": ["-A", "-S"],
+  "env": {
+    "IDA_TEMP_DIR": "/tmp/ida_hexrays",
+    "IDA_ANALYSIS_TIMEOUT": "300000",
+    "HEXRAYS_DECOMPILE_ARGS": "--max-functions=200"
+  },
+  "config": {
+    "analysisProfiles": {
+      "signature": {
+        "description": "FLIRT signature scan for known library detection",
+        "flags": {
+          "autoWait": true,
+          "applySigs": true,
+          "renameLibs": true
+        },
+        "timeout": 60000
+      },
+      "local": {
+        "description": "Decompile functions matching known patterns",
+        "flags": {
+          "autoWait": true,
+          "initHexRays": true,
+          "decompileSelected": true
+        },
+        "timeout": 120000
+      },
+      "full": {
+        "description": "Full decompilation of all non-library functions",
+        "flags": {
+          "autoWait": true,
+          "initHexRays": true,
+          "decompileAll": true,
+          "genCallGraph": true
+        },
+        "timeout": 300000
+      },
+      "targeted": {
+        "description": "Decompile specific suspicious functions",
+        "flags": {
+          "autoWait": true,
+          "initHexRays": true,
+          "decompileTargeted": true
+        },
+        "timeout": 180000
+      }
+    },
+    "analysisOptions": {
+      "decompile": true,
+      "renameFunctions": true,
+      "resolveXrefs": true,
+      "detectSwitchPatterns": true,
+      "optimizeOutNops": true,
+      "propagateConstants": true
+    },
+    "outputOptions": {
+      "pseudocodeFormat": true,
+      "astDump": false,
+      "includeOffsets": true,
+      "includeComments": true
+    },
+    "windowsPathMapping": {
+      "idaBin": "C:\\Program Files\\IDA Pro 9.1\\idat64.exe",
+      "scriptsDir": "%APPDATA%\\Hex-Rays\\IDA Pro\\scripts"
+    }
+  }
+}

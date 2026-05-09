@@ -1,0 +1,43 @@
+# Environment
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Case artifacts (entire case directory)
+cases/
+
+# Agent / tool caches
+.opencode/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Docker
+sandbox/containers/
+
+# Deep Agents submodule
+deepagents/
+
+# Landing page site (separately deployed)
+MORDOR-LANDING/

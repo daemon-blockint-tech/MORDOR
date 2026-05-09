@@ -1,0 +1,100 @@
+{
+  "serverType": "stdio",
+  "command": "/Users/macbook/.local/share/radare2/prefix/bin/r2mcp",
+  "args": [],
+  "env": {
+    "R2_CACHE_DIR": "/Users/macbook/Developer/MORDOR/.r2_cache",
+    "R2_ARCH": "x86",
+    "R2_BITS": "64",
+    "R2_ENDIAN": "little",
+    "R2_OS": "linux",
+    "R2_DEBUG": "0",
+    "R2_ANAL_DEPTH": "3"
+  },
+  "config": {
+    "analysisProfiles": {
+      "quick": {
+        "description": "Fast analysis for triage",
+        "flags": {
+          "aa": true,
+          "aaa": false,
+          "aaaa": false,
+          "afl": true,
+          "afll": false
+        },
+        "timeout": 30000
+      },
+      "standard": {
+        "description": "Standard analysis for most cases",
+        "flags": {
+          "aa": true,
+          "aaa": true,
+          "aaaa": false,
+          "afl": true,
+          "afll": true,
+          "afr": true
+        },
+        "timeout": 120000
+      },
+      "deep": {
+        "description": "Deep analysis for critical functions",
+        "flags": {
+          "aa": true,
+          "aaa": true,
+          "aaaa": true,
+          "afl": true,
+          "afll": true,
+          "afr": true,
+          "afvt": true,
+          "ad": true
+        },
+        "timeout": 300000
+      },
+      "malware": {
+        "description": "Malware-specific analysis profile",
+        "flags": {
+          "aa": true,
+          "aaa": true,
+          "aaaa": true,
+          "afl": true,
+          "afll": true,
+          "afr": true,
+          "ap": true,
+          "aH": true
+        },
+        "options": {
+          "anal.strings": true,
+          "anal.refs": true,
+          "anal.esil": true,
+          "anal.pushret": true
+        },
+        "timeout": 600000
+      }
+    },
+    "analysisOptions": {
+      "analyzeImports": true,
+      "analyzeExports": true,
+      "analyzeStrings": true,
+      "analyzeRelocs": true,
+      "xrefResolve": true,
+      "decompile": true,
+      "emulate": true,
+      "resolveCalls": true
+    },
+    "outputOptions": {
+      "jsonFormat": true,
+      "prettyPrint": false,
+      "includeOffsets": true,
+      "includeRawBytes": false
+    },
+    "scanning": {
+      "scanEntireFile": true,
+      "scanCodeRegions": true,
+      "scanDataRegions": true,
+      "maxScanSize": 1073741824,
+      "stringScan": true,
+      "cryptoScan": true,
+      "importScan": true
+    }
+  }
+}

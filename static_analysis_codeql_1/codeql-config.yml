@@ -1,0 +1,12 @@
+name: "MORDOR CodeQL Config"
+paths-ignore:
+  - "node_modules"
+  - "vendor"
+  - "venv"
+  - ".venv"
+  - "__pycache__"
+  - "*.min.js"
+  - "*.min.css"
+  - "dist"
+  - "build"
+  - ".git"

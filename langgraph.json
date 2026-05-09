@@ -1,0 +1,13 @@
+{
+  "python_version": "3.12",
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "mordor_pipeline": "./graph/pipeline.py:build_pipeline"
+  },
+  "env": ".env",
+  "checkpointer": {
+    "type": "memory"
+  }
+}

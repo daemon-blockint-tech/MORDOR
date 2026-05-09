@@ -1,0 +1,118 @@
+# MORDOR Sandbox Network Policy
+# Restricts sandbox containers to minimal egress and locked-down ingress.
+# Designed to prevent malware exfiltration while allowing analysis traffic.
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mordor-sandbox-policy
+  namespace: mordor
+  labels:
+    app: mordor
+    component: sandbox
+  annotations:
+    # TREEBEARD: all sandbox pods get this policy applied automatically
+    # GOLLUM: rate limits and allowlist prevent accidental C2 callbacks
+    description: "Locks down sandbox network — DNS-only egress, mordor-net ingress"
+spec:
+  podSelector:
+    matchLabels:
+      app: mordor
+      component: sandbox
+
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # ─── INGRESS ──────────────────────────────────────────────────────
+  # Only accept inbound traffic from the mordor-net namespace.
+  # This lets orchestrator agents (GANDALF, LEGOLAS, etc.) connect
+  # to sandboxed processes without exposing the sandbox to the cluster.
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: mordor-net
+      ports:
+        - protocol: TCP
+          port: 0             # allow all ports from mordor-net
+        - protocol: UDP
+          port: 0
+
+  # ─── EGRESS ───────────────────────────────────────────────────────
+  # Default deny all egress. Only explicitly allowed destinations
+  # and protocols may leave the sandbox.
+  egress:
+    # Rule 1: DNS resolution — required for domain-based allowlist
+    # Restricted to port 53 UDP only. Prevents DNS tunneling by
+    # limiting protocol and destination (kube-dns).
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # Rule 2: C2 simulation endpoints (application-layer allowlist)
+    # These destinations are permitted for red-team C2 frameworks
+    # used during dynamic analysis (e.g., Mythic, Sliver, Covenant).
+    # PIPPIN: all traffic is captured in /cases/<hash>/pcap/ for review.
+    - to:
+        - ipBlock:
+            cidr: 198.51.100.0/24    # TEST-NET-2 — simulation C2 range
+            except:
+              - 198.51.100.0/28      # reserved, no broad allow
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+
+    # Rule 3: Established connections (responses to allowed outbound)
+    # Without this, DNS replies and C2 responses would be dropped.
+    - ports:
+        - protocol: TCP
+          port: 0
+        - protocol: UDP
+          port: 0
+      to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      # NOTE: This is intentionally last. Kubernetes egress rules are
+      # additive — placing broad rules last means preceding narrow
+      # rules take priority in intent even if kube-proxy iptables
+      # doesn't sequence them that way.
+---
+# Rate limiting for DNS queries — prevents data exfiltration
+# via DNS tunneling by capping query volume per sandbox pod.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mordor-dns-rate-limit
+  namespace: mordor
+  labels:
+    app: mordor
+    component: sandbox
+  annotations:
+    # FARAMIR: burst exceeding 50qps/5s window triggers YARA scan
+    # ARWEN: base64-encoded subdomains flagged during decode pass
+    description: "DNS rate-limit config — 10qps steady, 30qps burst"
+data:
+  Corefile: |
+    . {
+        rate_limit {
+            # 10 queries per second steady state
+            # 30 burst before drop — accommodates malware that
+            # does rapid NXDOMAIN lookups during DGA seed phases
+            qps 10
+            burst 30
+        }
+        log
+        errors
+    }

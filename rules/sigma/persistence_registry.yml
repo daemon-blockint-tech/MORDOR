@@ -1,0 +1,169 @@
+title: Registry Persistence via Run/RunOnce Keys
+id: 2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e
+status: experimental
+description: Detects modifications to Run and RunOnce registry keys commonly used
+    by malware to establish auto-start persistence at user logon.
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+  - https://redcanary.com/threat-detection-report/techniques/boot-or-logon-autostart-execution/
+author: GANDALF (MORDOR)
+date: 2026-05-09
+tags:
+  - attack.persistence
+  - attack.t1547.001
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection_run_keys:
+    TargetObject|contains:
+      - '\Software\Microsoft\Windows\CurrentVersion\Run'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunOnce'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunOnceEx'
+      - '\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Run'
+      - '\Wow6432Node\Microsoft\Windows\CurrentVersion\RunOnce'
+  selection_suspicious_locations:
+    Details|contains:
+      - '\AppData\Roaming\'
+      - '\AppData\Local\Temp\'
+      - '\Users\Public\'
+      - '\Temporary Internet Files\'
+      - 'C:\Windows\Temp\'
+      - 'powershell.exe'
+      - 'mshta.exe'
+      - 'rundll32.exe'
+      - 'regsvr32.exe'
+      - 'cscript.exe'
+      - 'wscript.exe'
+  selection_suspicious_extensions:
+    Details|endswith:
+      - '.tmp'
+      - '.scr'
+      - '.pif'
+      - '.com'
+      - '.bat'
+      - '.vbs'
+      - '.ps1'
+      - '.js'
+  condition: selection_run_keys and 1 of selection_suspicious_*
+falsepositives:
+  - Legitimate software installers that write to RunOnce for post-install cleanup
+  - Official enterprise deployment tools (SCCM, Group Policy) that configure Run keys for authorized software
+  - User-initiated modifications to Run keys for legitimate auto-start applications
+level: high
+---
+title: Registry Persistence via Service Key Modification
+id: 3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f
+status: experimental
+description: Detects modification of service registry keys to hijack existing services
+    or create new malicious services for persistence. Monitors ImagePath changes,
+    FailureCommand, and Parameters keys for suspicious binary paths.
+references:
+  - https://attack.mitre.org/techniques/T1543/003/
+  - https://attack.mitre.org/techniques/T1574/011/
+  - https://www.elastic.co/guide/en/security/current/service-imagepath-hijack.html
+author: GANDALF (MORDOR)
+date: 2026-05-09
+tags:
+  - attack.persistence
+  - attack.t1543.003
+  - attack.t1574.011
+logsource:
+  category: registry_event
+  product: windows
+detection:
+  selection_service_path:
+    TargetObject|contains:
+      - '\Services\'
+    TargetObject|endswith:
+      - '\ImagePath'
+      - '\FailureCommand'
+      - '\Parameters'
+  selection_suspicious_image_path:
+    Details|contains:
+      - '\AppData\Local\Temp\'
+      - '\Users\Public\'
+      - 'C:\Windows\Temp\'
+      - 'cmd.exe /c '
+      - 'powershell.exe '
+      - 'rundll32.exe '
+      - 'regsvr32.exe '
+  selection_unusual_extension:
+    Details|endswith:
+      - '.tmp'
+      - '.bat'
+      - '.vbs'
+      - '.ps1'
+      - '.js'
+  selection_lsass_protected:
+    TargetObject|contains:
+      - '\lsass'
+      - '\winlogon'
+      - '\svchost'
+    Details|contains:
+      - 'Debugger'
+  condition: selection_service_path and (selection_suspicious_image_path or selection_unusual_extension or selection_lsass_protected)
+falsepositives:
+  - Legitimate administrators deploying or updating services via Group Policy
+  - Antivirus software that registers protected process services via Debugger key
+  - Enterprise software installers that modify service ImagePath during patch or update
+level: high
+---
+title: Registry Persistence — Debugger Takeover and Image Path Hijack
+id: 4d5e6f7a-8b9c-0d1e-3a4b-5c6d7e8f9a0b
+status: experimental
+description: Detects debugger takeover technique where malware sets a Debugger
+    value under an executable's SilentProcessExit or image file execution options
+    to hijack execution. Also covers BootExecute and AppInit_DLLs persistence.
+references:
+  - https://attack.mitre.org/techniques/T1546/012/
+  - https://attack.mitre.org/techniques/T1546/008/
+  - https://attack.mitre.org/techniques/T1547/011/
+  - https://www.hexacorn.com/blog/2013/09/19/beyond-good-ol-run-key-part-2/
+author: GANDALF (MORDOR)
+date: 2026-05-09
+tags:
+  - attack.persistence
+  - attack.t1546.012
+  - attack.t1546.008
+  - attack.t1547.011
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection_debugger:
+    TargetObject|contains:
+      - '\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\'
+      - '\Microsoft\Windows NT\CurrentVersion\SilentProcessExit\'
+    TargetObject|endswith: '\Debugger'
+  selection_boot_execute:
+    TargetObject|contains:
+      - '\Microsoft\Windows NT\CurrentVersion\Winlogon'
+    TargetObject|endswith: 'BootExecute'
+    Details|contains:
+      - 'autocheck'
+      - 'chkdsk'
+  selection_appinit_dlls:
+    TargetObject|contains:
+      - '\Microsoft\Windows NT\CurrentVersion\Windows'
+    TargetObject|endswith:
+      - 'AppInit_DLLs'
+      - 'LoadAppInit_DLLs'
+    Details: '*'
+  selection_suspicious_debugger_value:
+    Details|contains:
+      - '\AppData\Roaming\'
+      - '\AppData\Local\Temp\'
+      - '\Users\Public\'
+      - 'powershell.exe'
+      - 'rundll32.exe'
+      - 'mshta.exe'
+      - 'regsvr32.exe'
+  condition: selection_debugger and selection_suspicious_debugger_value
+      or selection_boot_execute
+      or (selection_appinit_dlls and Details contains '.dll' and not Details|contains 'system32')
+falsepositives:
+  - Legitimate developers using IFEO Debugger keys for debugging native applications
+  - Windows BootExecute normally runs autocheck on boot (chkdsk); monitor for abnormal values only
+  - Legitimate AppInit_DLLs entries from graphics drivers or accessibility software (e.g., nvinit.dll, ctfmon.dll)
+level: high

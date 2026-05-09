@@ -1,0 +1,67 @@
+{
+  "mcpServers": {
+    "ghidra": {
+      "command": "npx",
+      "args": [
+        "caveman-shrink",
+        "/Users/macbook/Developer/MORDOR/.venv/bin/python",
+        "/Users/macbook/Developer/MORDOR/vendor/ghidra-mcp-release/GhidraMCP-release-1-4/bridge_mcp_ghidra.py",
+        "--ghidra-server",
+        "http://127.0.0.1:8080/"
+      ],
+      "env": {
+        "GHIDRA_INSTALL_DIR": "/Users/macbook/Developer/MORDOR/vendor/ghidra/ghidra_12.0.4_PUBLIC",
+        "GHIDRA_PROJECTS_DIR": "/Users/macbook/Developer/MORDOR/ghidra_projects",
+        "JAVA_HOME": "/opt/homebrew/Cellar/openjdk/25.0.2/libexec/openjdk.jdk/Contents/Home"
+      },
+      "disabled": false
+    },
+    "radare2": {
+      "command": "npx",
+      "args": [
+        "caveman-shrink",
+        "/Users/macbook/.local/share/radare2/prefix/bin/r2mcp"
+      ],
+      "env": {
+        "R2_CACHE_DIR": "/Users/macbook/Developer/MORDOR/.r2_cache",
+        "R2_ARCH": "x86"
+      },
+      "disabled": false
+    },
+    "pay": {
+      "command": "npx",
+      "args": [
+        "caveman-shrink",
+        "/Users/macbook/.nvm/versions/node/v25.8.1/bin/pay",
+        "mcp"
+      ],
+      "env": {},
+      "disabled": false
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "caveman-shrink",
+        "python3",
+        "-m",
+        "mcp_server_filesystem",
+        "/Users/macbook/Developer/MORDOR/cases/"
+      ],
+      "env": {},
+      "disabled": false
+    },
+    "shodan": {
+      "command": "npx",
+      "args": [
+        "caveman-shrink",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-shodan"
+      ],
+      "env": {
+        "SHODAN_API_KEY": "${SHODAN_API_KEY}"
+      },
+      "disabled": false
+    }
+  }
+}

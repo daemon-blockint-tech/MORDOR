@@ -1,0 +1,40 @@
+{
+  "serverType": "stdio",
+  "command": "/Users/macbook/Developer/MORDOR/.venv/bin/python",
+  "args": [
+    "/Users/macbook/Developer/MORDOR/vendor/ghidra-mcp-release/GhidraMCP-release-1-4/bridge_mcp_ghidra.py",
+    "--ghidra-server",
+    "http://127.0.0.1:8080/"
+  ],
+  "env": {
+    "GHIDRA_INSTALL_DIR": "/Users/macbook/Developer/MORDOR/vendor/ghidra/ghidra_12.0.4_PUBLIC",
+    "GHIDRA_PROJECTS_DIR": "/Users/macbook/Developer/MORDOR/ghidra_projects",
+    "JAVA_HOME": "/opt/homebrew/Cellar/openjdk/25.0.2/libexec/openjdk.jdk/Contents/Home",
+    "GHIDRA_HEADLESS": "/Users/macbook/Developer/MORDOR/vendor/ghidra/ghidra_12.0.4_PUBLIC/support/analyzeHeadless",
+    "GHIDRA_MAX_MEMORY": "8G",
+    "GHIDRA_ANALYSIS_THREADS": "4"
+  },
+  "config": {
+    "analysisOptions": {
+      "autoAnalyze": true,
+      "decompilerEnabled": true,
+      "stackAnalysisEnabled": false,
+      "aggressiveInstructionFinder": false,
+      "createFunctionAtEntry": true,
+      "sharedReturnCalls": false,
+      "decompilerSimplification": "aggressive",
+      "includeDynamicImports": true
+    },
+    "decompilerOptions": {
+      "outputFormat": "c",
+      "normalizeNames": true,
+      "resolveXrefs": true,
+      "includeConstants": true
+    },
+    "workspace": {
+      "persistProject": true,
+      "autoSaveInterval": 60000,
+      "maxOpenProjects": 5
+    }
+  }
+}

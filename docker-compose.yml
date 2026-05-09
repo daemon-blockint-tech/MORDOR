@@ -1,0 +1,28 @@
+services:
+  mordor:
+    build: .
+    image: mordor:latest
+    container_name: mordor
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./cases:/cases
+      - ./.env:/app/.env:ro
+    environment:
+      - MORDOR_CASES_DIR=/cases
+    cap_add:
+      - SYS_PTRACE
+      - NET_ADMIN
+    security_opt:
+      - seccomp=unconfined
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  default:
+    name: mordor-net

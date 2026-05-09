@@ -1,0 +1,126 @@
+title: Process Injection via Remote Thread Creation and APC
+id: 7a8b9c0d-1e2f-4a3b-8c5d-6e7f8a9b0c1d
+status: experimental
+description: Detects classic and early-branch APC process injection techniques including
+    CreateRemoteThread, WriteProcessMemory, SetThreadContext, NtCreateThreadEx,
+    and QueueUserAPC API calls indicative of code injection into a remote process.
+references:
+  - https://attack.mitre.org/techniques/T1055/001/
+  - https://attack.mitre.org/techniques/T1055/004/
+  - https://redcanary.com/threat-detection-report/techniques/process-injection/
+  - https://www.elastic.co/guide/en/security/current/process-injection.html
+author: GANDALF (MORDOR)
+date: 2026-05-09
+tags:
+  - attack.defense_evasion
+  - attack.privilege_escalation
+  - attack.t1055.001
+  - attack.t1055.004
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_remote_thread:
+    Image|endswith:
+      - '\rundll32.exe'
+      - '\mshta.exe'
+      - '\regsvr32.exe'
+      - '\cscript.exe'
+      - '\wscript.exe'
+      - '\powershell.exe'
+    CommandLine|contains:
+      - 'CreateRemoteThread'
+      - 'NtCreateThreadEx'
+      - 'RtlCreateUserThread'
+  selection_write_process_memory:
+    Image|endswith:
+      - '\rundll32.exe'
+      - '\mshta.exe'
+      - '\regsvr32.exe'
+      - '\cscript.exe'
+      - '\wscript.exe'
+      - '\powershell.exe'
+    CommandLine|contains:
+      - 'WriteProcessMemory'
+      - 'NtWriteVirtualMemory'
+  selection_set_thread_context:
+    Image|endswith:
+      - '\rundll32.exe'
+      - '\mshta.exe'
+      - '\regsvr32.exe'
+      - '\cscript.exe'
+      - '\wscript.exe'
+      - '\powershell.exe'
+    CommandLine|contains:
+      - 'SetThreadContext'
+      - 'NtSetContextThread'
+  selection_apc_injection:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\cmd.exe'
+    CommandLine|contains:
+      - 'QueueUserAPC'
+      - 'NtQueueApcThread'
+      - 'NtQueueApcThreadEx'
+  condition: 1 of selection_*
+falsepositives:
+  - Legitimate antivirus or EDR software that uses similar API patterns for monitoring
+  - Legitimate software installers and updaters performing inter-process communication
+  - Developer tools and debuggers that legitimately set thread context or write remote process memory
+  - Some Windows components and .NET runtime that may invoke NtCreateThreadEx for internal operations
+level: high
+---
+title: Process Injection — Early-Branch APC Injection via Suspicious Call Stack
+id: 7a8b9c0d-1e2f-4a3b-8c5d-6e7f8a9b0c1e
+status: experimental
+description: Detects early-branch APC injection patterns where QueueUserAPC or
+    NtQueueApcThread is called against a target thread in a newly created suspended
+    process (often a legitimate binary), followed by ResumedThread — a hallmark
+    of early-branch APC injection.
+references:
+  - https://attack.mitre.org/techniques/T1055/004/
+  - https://www.cyberbit.com/blog/endpoint-security/apc-injection-technique/
+author: GANDALF (MORDOR)
+date: 2026-05-09
+tags:
+  - attack.defense_evasion
+  - attack.t1055.004
+logsource:
+  category: api_monitoring
+  product: windows
+detection:
+  selection_apc_suspicious_process:
+    Api|contains:
+      - 'QueueUserAPC'
+      - 'NtQueueApcThread'
+      - 'NtQueueApcThreadEx'
+    TargetProcess|endswith:
+      - '\svchost.exe'
+      - '\lsass.exe'
+      - '\explorer.exe'
+      - '\winlogon.exe'
+      - '\services.exe'
+      - '\svchost.exe'
+  selection_resume_thread:
+    Api|contains: 'ResumeThread'
+    CallerProcess|endswith:
+      - '\rundll32.exe'
+      - '\mshta.exe'
+      - '\regsvr32.exe'
+      - '\cscript.exe'
+      - '\wscript.exe'
+      - '\powershell.exe'
+      - '\cmd.exe'
+  selection_suspend_create:
+    Api|contains:
+      - 'CreateProcess'
+      - 'NtCreateProcess'
+      - 'CreateProcessWithLogon'
+      - 'CreateProcessAsUser'
+    CreationFlags|contains: 'CREATE_SUSPENDED'
+  condition: selection_apc_suspicious_process and selection_resume_thread and selection_suspend_create
+falsepositives:
+  - Legitimate debugging or sandboxing tools that suspend and resume processes
+  - Anti-cheat software for online games that monitors process creation and thread manipulation
+  - Legitimate software that uses process hollowing or suspend-resume as part of normal operation (e.g., updaters, packers)
+level: critical
