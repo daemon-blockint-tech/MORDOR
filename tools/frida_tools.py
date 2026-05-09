@@ -6,6 +6,8 @@ import os
 import subprocess
 import time
 
+from tools.safe_util import safe_subprocess_env
+
 logger = logging.getLogger("mordor.tools.frida")
 
 
@@ -66,7 +68,8 @@ def attach_hooks(binary_path: str, functions: list[str]) -> dict:
         pid = None
         try:
             pid = int(
-                subprocess.check_output(["pgrep", "-x", os.path.basename(binary_path)])
+                subprocess.check_output(["pgrep", "-x", os.path.basename(binary_path)],
+                                        env=safe_subprocess_env())
                 .decode().strip()
             )
         except (subprocess.CalledProcessError, ValueError):

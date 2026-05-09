@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 
 from graph.state import CaseState
+from tools.safe_util import sanitize_for_prompt
 
 
 def write_report(state: CaseState) -> str:
@@ -25,7 +25,7 @@ def write_report(state: CaseState) -> str:
         f"**Analysis Tier**: {tier}",
         f"**Overall Confidence**: {state.get('confidence_overall', 0.0):.0f}%",
         "",
-        f"**Binary Path**: {state.get('binary_path', 'unknown')}",
+        f"**Binary Path**: {sanitize_for_prompt(state.get('binary_path', 'unknown'))}",
         f"**File Type**: {state.get('file_type', 'unknown')}",
         f"**File Size**: {_fmt_size(state.get('file_size', 0)) or 'unknown'}",
         "",

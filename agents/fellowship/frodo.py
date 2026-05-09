@@ -6,6 +6,7 @@ from agents.gates import skip_llm
 from agents.schemas import FrodoHookSchema
 from tools.frida_tools import attach_hooks as real_attach_hooks
 from tools.openrouter_client import chat_structured
+from tools.safe_util import sanitize_for_prompt
 
 logger = logging.getLogger("mordor.agents.frodo")
 
@@ -32,7 +33,7 @@ def run_hooks(suspicious_functions: list[str], binary_path: str, tier: str = "st
             {
                 "role": "user",
                 "content": (
-                    f"Binary: {binary_path}\n"
+                    f"Binary: {sanitize_for_prompt(binary_path)}\n"
                     f"Suspicious functions: {suspicious_functions}\n"
                     "Describe Frida hooks: intercept parameters, return values, and stack traces."
                 ),

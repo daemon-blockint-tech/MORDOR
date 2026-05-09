@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import subprocess
+
+from tools.safe_util import safe_subprocess_env
 
 logger = logging.getLogger("mordor.tools.pay")
 
@@ -15,6 +18,7 @@ def _run_pay(args: list[str], timeout: int = 30) -> dict:
         result = subprocess.run(
             [PAY_BIN, *args],
             capture_output=True, text=True, timeout=timeout,
+            env=safe_subprocess_env(),
         )
         if result.returncode != 0:
             stderr = result.stderr.strip()
@@ -50,6 +54,15 @@ def send_payment(
     token: str = "usdc",
     network: str = "solana",
 ) -> dict:
+    from tools.safe_util import validate_solana_address, validate_amount
+    if not validate_solana_address(recipient):
+        return {"status": "error", "message": "invalid recipient address"}
+    if not validate_amount(amount):
+        return {"status": "error", "message": "invalid amount"}
+    if not re.match(r"^[a-z0-9_]{1,32}$", token):
+        return {"status": "error", "message": "invalid token"}
+    if network not in ("solana", "eclipse", "mainnet"):
+        return {"status": "error", "message": "unsupported network"}
     return _run_pay([
         "send",
         "--recipient", recipient,

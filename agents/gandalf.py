@@ -19,7 +19,10 @@ class GandalfOrchestrator:
         import hashlib
         import os
 
-        sha256 = hashlib.sha256(open(binary_path, "rb").read()).hexdigest()
+        from tools.safe_util import sanitize_path
+        safe_path = sanitize_path(binary_path)
+        with open(safe_path, "rb") as f:
+            sha256 = hashlib.sha256(f.read()).hexdigest()
         case_dir = f"cases/{sha256}"
 
         return {
@@ -38,7 +41,7 @@ class GandalfOrchestrator:
             "confidence_overall": 0.0,
             "confidence_breakdown": {},
             "file_type": None,
-            "file_size": os.path.getsize(binary_path),
+            "file_size": os.path.getsize(safe_path),
             "cost_entries": [],
             "cost_summary": {},
         }

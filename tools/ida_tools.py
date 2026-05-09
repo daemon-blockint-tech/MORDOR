@@ -1,18 +1,27 @@
-import os
 import json
-import tempfile
-import subprocess
 import logging
+import os
+import subprocess
+import tempfile
+
+from tools.safe_util import sanitize_path, safe_subprocess_env, get_subprocess_timeout
 
 logger = logging.getLogger("mordor.tools.ida")
 
 IDA_PATH = os.environ.get("IDA_PATH", "/Applications/IDA Free 9.3.app/Contents/MacOS/idat64")
+ALLOWED_DIR = os.environ.get("MORDOR_CASES_DIR", os.path.realpath("cases"))
+
 
 def extract_with_ida(binary_path: str) -> dict:
     if not os.path.exists(IDA_PATH):
         logger.error(f"IDA not found at {IDA_PATH}")
         return {"status": "error", "error": "IDA executable not found"}
-        
+
+    try:
+        binary_path = sanitize_path(binary_path, ALLOWED_DIR)
+    except (ValueError, FileNotFoundError) as e:
+        return {"status": "error", "error": str(e)}
+
     script_content = """import idaapi
 import idautils
 import idc
@@ -67,7 +76,9 @@ finally:
     
     try:
         logger.info(f"Running IDA: {' '.join(cmd)}")
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        result = subprocess.run(cmd, capture_output=True, text=True,
+                                timeout=get_subprocess_timeout(120),
+                                env=safe_subprocess_env())
         
         if "does not support the batch mode" in result.stdout or "does not support the batch mode" in result.stderr:
             logger.error("IDA Free license detected - batch mode is unsupported.")

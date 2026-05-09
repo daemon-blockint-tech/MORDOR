@@ -40,7 +40,7 @@ def phase_fingerprint(state: CaseState) -> Command[Literal["filter", "report", "
     case_dir = state["case_dir"]
     tier = state.get("analysis_tier", "standard")
     journal = AnalysisJournal(case_dir)
-    Path(case_dir).mkdir(parents=True, exist_ok=True)
+    Path(case_dir).mkdir(parents=True, exist_ok=True, mode=0o750)
 
     with journal.timed(agent="aragorn", phase="fingerprint", tier=tier, action="osint", tool_used="shodan"):
         aragorn_result = run_osint(state["sha256"], tier=tier)

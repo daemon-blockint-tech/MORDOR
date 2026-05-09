@@ -7,6 +7,7 @@ import subprocess
 from agents.gates import skip_llm
 from agents.schemas import TreebeardSandboxSchema
 from tools.openrouter_client import chat_structured
+from tools.safe_util import safe_subprocess_env, get_subprocess_timeout, validate_docker_path, sanitize_for_prompt
 
 logger = logging.getLogger("mordor.treebeard")
 
@@ -14,7 +15,9 @@ logger = logging.getLogger("mordor.treebeard")
 def verify_sandbox() -> bool:
     try:
         # Check docker without using shell wrapper
-        result = subprocess.run(["docker", "info"], capture_output=True, text=True, check=False)
+        result = subprocess.run(["docker", "info"], capture_output=True, text=True,
+                                check=False, env=safe_subprocess_env(),
+                                timeout=get_subprocess_timeout(30))
         return result.returncode == 0
     except Exception:
         return False
@@ -22,16 +25,19 @@ def verify_sandbox() -> bool:
 
 def _safely_inject_binary(binary_path: str, container_name: str = "mordor-sandbox") -> bool:
     """Safely injects the malware binary into the sandbox via docker cp."""
-    if not os.path.isfile(binary_path):
-        logger.error(f"Binary path not found: {binary_path}")
+    allowed_base = os.environ.get("MORDOR_CASES_DIR", os.path.realpath("cases"))
+    try:
+        safe_path = validate_docker_path(binary_path, allowed_base)
+    except (ValueError, FileNotFoundError) as e:
+        logger.error(f"Binary injection blocked: {e}")
         return False
     try:
         # Never execute the binary on the host
         # Inject via docker cp
         result = subprocess.run(
-            ["docker", "cp", binary_path, f"{container_name}:/workspace/sample.bin"],
-            capture_output=True,
-            check=False,
+            ["docker", "cp", safe_path, f"{container_name}:/workspace/sample.bin"],
+            capture_output=True, check=False,
+            env=safe_subprocess_env(), timeout=get_subprocess_timeout(60),
         )
         return result.returncode == 0
     except Exception as e:
@@ -40,12 +46,6 @@ def _safely_inject_binary(binary_path: str, container_name: str = "mordor-sandbo
 
 
 def run_in_sandbox(binary_path: str, use_llm_fallback: bool = True, tier: str = "standard") -> dict:
-    # Explicitly strip sensitive API keys from the current execution environment (defense-in-depth)
-    safe_env = os.environ.copy()
-    for sensitive_key in ["ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "SHODAN_API_KEY"]:
-        if sensitive_key in safe_env:
-            del safe_env[sensitive_key]
-
     if not verify_sandbox():
         if not use_llm_fallback or skip_llm(tier):
             return {"status": "sandbox_not_available", "results": {}, "container_id": None}
@@ -71,7 +71,7 @@ def _sandbox_llm_analysis(binary_path: str) -> dict:
         },
         {
             "role": "user",
-            "content": f"Simulate sandbox analysis for: {binary_path}",
+            "content": f"Simulate sandbox analysis for: {sanitize_for_prompt(binary_path)}",
         },
     ]
     result = chat_structured(

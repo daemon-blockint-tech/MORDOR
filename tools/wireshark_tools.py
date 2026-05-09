@@ -5,6 +5,8 @@ import os
 import subprocess
 import tempfile
 
+from tools.safe_util import safe_subprocess_env, get_subprocess_timeout
+
 logger = logging.getLogger("mordor.tools.wireshark")
 
 
@@ -31,7 +33,8 @@ def capture_traffic(interface: str = "eth0", duration: int = 30) -> str:
         subprocess.run(
             [tshark, "-i", interface, "-a", f"duration:{duration}", "-w", pcap_path],
             capture_output=True,
-            timeout=duration + 10,
+            timeout=get_subprocess_timeout(duration + 10),
+            env=safe_subprocess_env(),
             check=False,
         )
         return pcap_path
@@ -55,7 +58,8 @@ def parse_pcap(pcap_path: str) -> list[dict]:
     try:
         result = subprocess.run(
             [tshark, "-r", pcap_path, "-T", "json", "-q"],
-            capture_output=True, text=True, timeout=120, check=False,
+            capture_output=True, text=True, timeout=get_subprocess_timeout(120),
+            env=safe_subprocess_env(), check=False,
         )
         if result.returncode != 0:
             logger.warning("tshark parse returned %d: %s", result.returncode, result.stderr[:200])

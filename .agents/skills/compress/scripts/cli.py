@@ -19,10 +19,10 @@ for _stream in (sys.stdout, sys.stderr):
         except Exception:
             pass
 
-from pathlib import Path
+from pathlib import Path  # noqa: E402
 
-from .compress import compress_file
-from .detect import detect_file_type, should_compress
+from .compress import compress_file  # noqa: E402
+from .detect import detect_file_type, should_compress  # noqa: E402
 
 
 def print_usage():

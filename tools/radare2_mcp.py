@@ -6,6 +6,8 @@ import os
 import subprocess
 from typing import Any
 
+from tools.safe_util import sanitize_path, safe_subprocess_env, get_subprocess_timeout
+
 logger = logging.getLogger("mordor.tools.radare2")
 
 R2_BIN = os.environ.get("R2_BIN", "/opt/homebrew/bin/r2")
@@ -15,9 +17,11 @@ def _r2(cmd: str, binary_path: str) -> str:
     if not os.path.isfile(binary_path):
         return ""
     try:
+        safe_path = sanitize_path(binary_path)
         proc = subprocess.run(
-            [R2_BIN, "-q", "-c", cmd, binary_path],
-            capture_output=True, text=True, timeout=60,
+            [R2_BIN, "-q", "-c", cmd, safe_path],
+            capture_output=True, text=True, timeout=get_subprocess_timeout(60),
+            env=safe_subprocess_env(),
         )
         return proc.stdout
     except Exception as exc:

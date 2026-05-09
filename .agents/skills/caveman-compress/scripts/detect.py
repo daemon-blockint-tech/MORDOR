@@ -55,7 +55,7 @@ def _is_yaml_content(lines: list[str]) -> bool:
         elif stripped.startswith("- ") and ":" in stripped:
             yaml_indicators += 1
     # If most non-empty lines look like YAML
-    non_empty = sum(1 for l in lines[:30] if l.strip())
+    non_empty = sum(1 for line_ in lines[:30] if line_.strip())
     return non_empty > 0 and yaml_indicators / non_empty > 0.6
 
 
@@ -87,8 +87,8 @@ def detect_file_type(filepath: Path) -> str:
         if _is_yaml_content(lines):
             return "config"
 
-        code_lines = sum(1 for l in lines if l.strip() and _is_code_line(l))
-        non_empty = sum(1 for l in lines if l.strip())
+        code_lines = sum(1 for line_ in lines if line_.strip() and _is_code_line(line_))
+        non_empty = sum(1 for line_ in lines if line_.strip())
         if non_empty > 0 and code_lines / non_empty > 0.4:
             return "code"
 

@@ -16,7 +16,7 @@ STATUS_FILE = ".status.json"
 class CaseManager:
     def __init__(self, cases_dir: str = "cases"):
         self.cases_dir = Path(cases_dir)
-        self.cases_dir.mkdir(parents=True, exist_ok=True)
+        self.cases_dir.mkdir(parents=True, exist_ok=True, mode=0o750)
         self._locks: dict[str, Lock] = {}
         self._statuses: dict[str, dict[str, Any]] = {}
 
@@ -26,7 +26,7 @@ class CaseManager:
     def _persist_status(self, case_id: str) -> None:
         if case_id in self._statuses:
             path = self._status_path(case_id)
-            path.parent.mkdir(parents=True, exist_ok=True)
+            path.parent.mkdir(parents=True, exist_ok=True, mode=0o750)
             path.write_text(json.dumps(self._statuses[case_id], indent=2))
 
     def _load_status_from_disk(self, case_id: str) -> dict[str, Any] | None:
@@ -55,9 +55,12 @@ class CaseManager:
         return None
 
     def create_case(self, binary_path: str, tier: str = "standard") -> tuple[str, dict[str, Any]]:
-        sha256 = hashlib.sha256(open(binary_path, "rb").read()).hexdigest()
+        from tools.safe_util import sanitize_path
+        safe_path = sanitize_path(binary_path)
+        with open(safe_path, "rb") as f:
+            sha256 = hashlib.sha256(f.read()).hexdigest()
         case_dir = str(self.cases_dir / sha256)
-        os.makedirs(case_dir, exist_ok=True)
+        os.makedirs(case_dir, exist_ok=True, mode=0o750)
 
         initial = {
             "binary_path": binary_path,
@@ -74,7 +77,7 @@ class CaseManager:
             "confidence_overall": 0.0,
             "confidence_breakdown": {},
             "file_type": None,
-            "file_size": os.path.getsize(binary_path),
+            "file_size": os.path.getsize(safe_path),
             "cost_entries": [],
             "cost_summary": {},
         }

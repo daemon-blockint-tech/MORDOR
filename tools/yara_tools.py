@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from tools.safe_util import sanitize_path
+
 logger = logging.getLogger("mordor.tools.yara")
 
 
@@ -20,6 +22,12 @@ def scan_file(binary_path: str, rules_path: str | list[str] | None = None) -> li
         import yara
     except ImportError:
         logger.warning("yara-python not installed, cannot scan with YARA")
+        return []
+
+    try:
+        binary_path = sanitize_path(binary_path)
+    except (ValueError, FileNotFoundError) as e:
+        logger.warning("YARA scan blocked: %s", e)
         return []
 
     if rules_path is None:

@@ -6,6 +6,7 @@ from agents.gates import skip_llm
 from agents.schemas import LegolasAnnotationSchema, load_system_prompt
 from tools.openrouter_client import chat_structured
 from tools.radare2_mcp import analyze_binary as r2_analyze
+from tools.safe_util import sanitize_for_prompt
 
 logger = logging.getLogger("mordor.agents.legolas")
 
@@ -27,7 +28,7 @@ def run_static_analysis(binary_path: str, file_type: str | None = None, tier: st
             {
                 "role": "user",
                 "content": (
-                    f"Annotate this binary: {binary_path}{file_hint}\n"
+                    f"Annotate this binary: {sanitize_for_prompt(binary_path)}{file_hint}\n"
                     f"Functions: {len(r2_result.get('functions', []))}\n"
                     f"Imports: {[i.get('name','') for i in r2_result.get('imports', [])[:20]]}\n"
                     f"Sections: {[s.get('name','') for s in r2_result.get('sections', [])]}\n"

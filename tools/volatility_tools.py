@@ -4,6 +4,8 @@ import logging
 import os
 import subprocess
 
+from tools.safe_util import safe_subprocess_env, get_subprocess_timeout
+
 logger = logging.getLogger("mordor.tools.volatility")
 
 
@@ -32,16 +34,19 @@ def analyze_dump(dump_path: str) -> dict:
         logger.warning("volatility3 not installed, falling back to CLI")
 
     try:
+        safe_env = safe_subprocess_env()
         result = subprocess.run(
             ["vol", "-f", dump_path, "windows.pstree"],
-            capture_output=True, text=True, timeout=300, check=False,
+            capture_output=True, text=True, timeout=get_subprocess_timeout(300),
+            env=safe_env, check=False,
         )
         if result.returncode == 0:
             return {"processes": result.stdout[:5000], "network": [], "registry": [], "status": "ok"}
 
         result = subprocess.run(
             ["vol", "-f", dump_path, "linux.pstree"],
-            capture_output=True, text=True, timeout=300, check=False,
+            capture_output=True, text=True, timeout=get_subprocess_timeout(300),
+            env=safe_env, check=False,
         )
         if result.returncode == 0:
             return {"processes": result.stdout[:5000], "network": [], "registry": [], "status": "ok"}

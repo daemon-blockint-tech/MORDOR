@@ -7,6 +7,7 @@ import subprocess
 from agents.gates import skip_llm
 from agents.schemas import MerryDependencySchema
 from tools.openrouter_client import chat_structured
+from tools.safe_util import sanitize_for_prompt
 
 logger = logging.getLogger("mordor.agents.merry")
 
@@ -82,7 +83,7 @@ def audit_dependencies(binary_path: str, tier: str = "standard") -> dict:
             },
             {
                 "role": "user",
-                "content": f"Audit dependencies for this binary path: {binary_path}",
+                "content": f"Audit dependencies for this binary path: {sanitize_for_prompt(binary_path)}",
             },
         ]
         result = chat_structured(

@@ -10,11 +10,7 @@ services:
       - ./.env:/app/.env:ro
     environment:
       - MORDOR_CASES_DIR=/cases
-    cap_add:
-      - SYS_PTRACE
-      - NET_ADMIN
-    security_opt:
-      - seccomp=unconfined
+    cap_add: []
     stop_grace_period: 30s
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8765/v1/health"]

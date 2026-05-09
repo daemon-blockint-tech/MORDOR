@@ -302,7 +302,7 @@ class AnalyzeScreenDirect(Screen):
             phase_idx = [0]
 
             self.call_from_thread(
-                lambda: event_log.write(f"[cyan]→[/] Starting direct analysis via GandalfOrchestrator...")
+                lambda: event_log.write("[cyan]→[/] Starting direct analysis via GandalfOrchestrator...")
             )
 
             for event in orchestrator.stream(self.binary_path, tier=self.tier):
@@ -319,7 +319,7 @@ class AnalyzeScreenDirect(Screen):
 
         except Exception as exc:
             self.call_from_thread(
-                lambda: self.query_one("#event-log", EventLog).write(f"[red]✗ Error:[/] {exc}")
+                lambda e=exc: self.query_one("#event-log", EventLog).write(f"[red]✗ Error:[/] {e}")
             )
 
     def on_button_pressed(self, event: Button.Pressed):
@@ -340,7 +340,7 @@ class ReportScreenDirect(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
-            Label(f"[bold]Analysis Report[/]" + (f" — {self.case_sha[:16]}..." if self.case_sha else ""), classes="title"),
+            Label("[bold]Analysis Report[/]" + (f" — {self.case_sha[:16]}..." if self.case_sha else ""), classes="title"),
             RichLog(id="report-content", wrap=True, highlight=True),
             Button("Back", id="back"),
         )

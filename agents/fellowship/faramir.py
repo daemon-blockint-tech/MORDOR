@@ -5,6 +5,7 @@ import logging
 from agents.gates import skip_llm
 from agents.schemas import FaramirYARASchema
 from tools.openrouter_client import chat_structured
+from tools.safe_util import sanitize_for_prompt
 from tools.yara_tools import scan_file
 
 logger = logging.getLogger("mordor.agents.faramir")
@@ -27,7 +28,7 @@ def scan_with_yara(binary_path: str, rules_path: str | None = None, tier: str = 
             },
             {
                 "role": "user",
-                "content": f"Describe expected YARA matches for: {binary_path}\nRules: {rules_path or 'default rules'}",
+                "content": f"Describe expected YARA matches for: {sanitize_for_prompt(binary_path)}\nRules: {rules_path or 'default rules'}",
             },
         ]
         result = chat_structured(
